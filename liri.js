@@ -4,6 +4,7 @@ var spotify = require('spotify');
 // Include the request npm package(Don 't forget to run "npm install request" in this folder first!)
 var request = require('request');
 var fs = require('fs');
+
 // Create a "Prompt" with a series of questions.
 inquirer.prompt([
     // Here we create a basic text prompt.
@@ -45,7 +46,7 @@ inquirer.prompt([
     }
     // Once we are done with all the questions... "then" we do stuff with the answers
     // In this case, we store all of the answers into a "user" object that inquirer makes for us. 
-]).then(function(search) {
+]).then(function logic(search) {
     // If we log that search as a JSON, we can see how it looks.
     // console.log(JSON.stringify(search, null, 2));
     if (search.searchType === "tweets") {
@@ -95,20 +96,8 @@ inquirer.prompt([
         });
     } else if (search.searchType === "movies") {
         // OMBD 
-        // Store all of the arguments in an array 
-        // var nodeArgs = 
-        // var nodeArgs = process.argv;
         // Create an empty variable for holding the movie name
         var movieName = search.movies;
-        // Loop through all the words in the node argument
-        // And do a little for-loop magic to handle the inclusion of "+"s
-        // for (var i = 2; i < nodeArgs.length; i++) {
-        //     if (i > 2 && i < nodeArgs.length) {
-        //         movieName = movieName + "+" + nodeArgs[i];
-        //     } else {
-        //         movieName = movieName + nodeArgs[i];
-        //     }
-        // }
         // Then run a request to the OMDB API with the movie specified 
         var queryUrl = 'http://www.omdbapi.com/?t=' + movieName + '&y=&plot=short&tomatoes=true&r=json';
         // This line is just to help us debug against the actual URL.  
@@ -134,13 +123,25 @@ inquirer.prompt([
         });
     } else if (search.searchType === "something") {
     	fs.readFile("random.txt", "utf8", function(error, data){
+
     		data = data.split(',');
 
       	console.log(data);
       	console.log("First element: " + data[0]);
       	console.log("Second element: " + data[1]);
         search.searchType = data[0];
-        	if (search.searchType === "movies") {};
+        	if (search.searchType === "songs") {
+        		response = data[1];
+        		logic("songs");
+        	} else if (search.searchType === "movies") {
+        		movieName = data[1];
+        		logic("movies");
+        	} else if (search.searchtype === "tweets") {
+        		logic("twitter");
+        	}
       });
     }
 });
+
+
+
