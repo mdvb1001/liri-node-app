@@ -1,13 +1,16 @@
 // Load the NPM Package inquirer
 var inquirer = require('inquirer');
+// Load the NPM Package spotify
 var spotify = require('spotify');
-// Include the request npm package(Don 't forget to run "npm install request" in this folder first!)
+// Load the NPM Package twitter
+var Twitter = require('twitter');
+// Load the NPM Package request for OMDB
 var request = require('request');
+// Load the fs Package for the 'do-what-I-say' command and random.txt
 var fs = require('fs');
-var movieName ="";
-// Create a "Prompt" with a series of questions.
+// Create a "Prompt" with a series of commands
 inquirer.prompt([
-    // Here we create a basic text prompt.
+	// List of commands to choose from, then respective commands with 'when' key.
     {
         type: "list",
         message: "Tweets, Songs, Movies or Something?",
@@ -42,72 +45,76 @@ inquirer.prompt([
             return answers.searchType === "do-what-it-says";
         }
     }
-    // Once we are done with all the questions... "then" we do stuff with the answers
-    // In this case, we store all of the answers into a "user" object that inquirer makes for us. 
+    // Once we are done with all choosing a command and making a search... we "then" we do stuff with the 'searches'
+    // In this case, we store all of the 'searches' into a 'search' object that inquirer makes for us. 
 ]).then(function logic(search) {
-    // If we log that search as a JSON, we can see how it looks.
-    // console.log(JSON.stringify(search, null, 2));
+    // If user selects the my-tweet command, then user tweets are displayed
     if (search.searchType === "my-tweets") {
         // TWITTER
         console.log('this is loaded');
+        // keys are protected in keys.js file 
         keys = require('./keys.js');
-        var Twitter = require('twitter');
+        // retrieve keys from keys.js file
         var client = new Twitter({
             consumer_key: keys.twitterKeys.consumer_key,
             consumer_secret: keys.twitterKeys.consumer_secret,
             access_token_key: keys.twitterKeys.access_token_key,
             access_token_secret: keys.twitterKeys.access_token_secret
         });
+        // basic parameters: username and limit of 20 latest tweets
         var params = {
             screen_name: 'maxvanbel',
             count: 20
         };
+        // fetch tweets 
         client.get('statuses/user_timeline', params, function(error, tweets, songName) {
+        	// if no error then run through all tweets 
             if (!error) {
                 for (var i = 0; i < tweets.length; i++) {
                     console.log("\nTweet #" + (i + 1) + ": " + tweets[i].text);
                 }
             }
         });
+    // If user select the spotify-this-song command... 
     } else if (search.searchType === "spotify-this-song") {
-        // SPOTIFY 
-        // var type = process.argv[3];
-        // var songName = process.argv[2];
+        // the song name is the song inputed 
         var songName = search["spotify-this-song"];
+        // if nothing is inputed then get 'the sign' by 'ace of base'
         if (songName.length === 0) {
             songName = "the sign ace of base";
         }
+        // fetch song data (type is track)
         spotify.search({
             type: 'track',
             query: songName
         }, function(err, data) {
+        	// if error occurs, then display error... 
             if (err) {
                 console.log('Error occurred: ' + err);
                 return;
+            // otherwise, display info on the track
             } else {
                 console.log("Song: " + data.tracks.items[0].name);
                 console.log("Artist: " + data.tracks.items[0].artists[0].name);
                 console.log("Preview: " + data.tracks.items[0].preview_url);
                 console.log("Album: " + data.tracks.items[0].album.name);
             }
-            // console.log(data.tracks);
         });
+     // If user selects movie-this as a command...
     } else if (search.searchType === "movie-this") {
-        // OMBD 
-        // Create an empty variable for holding the movie name
-        movieName = search['movie-this'];
+        // create a variable for movie inputed by user
+        var movieName = search['movie-this'];
         // Then run a request to the OMDB API with the movie specified 
         var queryUrl = 'http://www.omdbapi.com/?t=' + movieName + '&y=&plot=short&tomatoes=true&r=json';
-        // This line is just to help us debug against the actual URL.  
+        // If nothing is inputed by the user, return "Mr. Nobody" as default   
         if (movieName.length === 0) {
-            movieName = "Mr. Nobody"; // this doesn't actually do anything...
             queryUrl = 'http://www.omdbapi.com/?t=Mr.Nobody&y=&plot=short&tomatoes=true&r=json';
         }
         console.log(queryUrl);
+        // otherwise... fetch info on movie inputed by user 
         request(queryUrl, function(error, response, body) {
             if (!error && response.statusCode == 200) {
-                // Parse the body of the site and recover just the imdbRating
-                // (Note: The syntax below for parsing isn't obvious. Just spend a few moments dissecting it). 
+      			// Parse the JSON string se we get an object 
                 console.log("Title: " + JSON.parse(body).Title);
                 console.log("Release Year: " + JSON.parse(body).Year);
                 console.log("IMDB Rating: " + JSON.parse(body).imdbRating);
@@ -119,19 +126,18 @@ inquirer.prompt([
                 console.log("Rotten Tomatoes URL: " + JSON.parse(body).tomatoURL);
             }
         });
+     // If user selects the do-what-it-says command... 
     } else if (search.searchType === "do-what-it-says") {
+    	// read the data from the random.txt via the fs package 
         fs.readFile("random.txt", "utf8", function(error, data) {
-
-            // data = data.split(',');
+        	// Split the data where the ',' is so we get an array
             data = data.split(',');
-            console.log(data);
-            console.log("First element: " + data[0]);
-            console.log("Second element: " + data[1]);
-            // console.log(data.replace(/a/g, ''));
-
+            // The first element of the array is stored as the command
             search.searchType = data[0];
+            // The second element of the array is stored as the input... either as a song or a movie
             search["spotify-this-song"] = data[1];
             search["movie-this"] = data[1];
+            // recursive function... to run the whole thing again
             logic(search);
 
         });
