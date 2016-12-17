@@ -11,7 +11,7 @@ inquirer.prompt([
     {
         type: "list",
         message: "Tweets, Songs, Movies or Something?",
-        choices: ["my-tweets", "spotify-this-song", "movies", "something"],
+        choices: ["my-tweets", "spotify-this-song", "movie-this", "do-what-it-says"],
         name: "searchType"
     }, {
         type: "confirm",
@@ -30,16 +30,16 @@ inquirer.prompt([
     }, {
         type: "input",
         message: "movie-this",
-        name: "movies",
+        name: "movie-this",
         when: function(answers) {
-            return answers.searchType === "movies";
+            return answers.searchType === "movie-this";
         }
     }, {
         type: "confirm",
         message: "do-what-it-says",
-        name: "something",
+        name: "do-what-it-says",
         when: function(answers) {
-            return answers.searchType === "something";
+            return answers.searchType === "do-what-it-says";
         }
     }
     // Once we are done with all the questions... "then" we do stuff with the answers
@@ -73,7 +73,7 @@ inquirer.prompt([
         // SPOTIFY 
         // var type = process.argv[3];
         // var songName = process.argv[2];
-        var songName = search.spotify-this-song;
+        var songName = search["spotify-this-song"];
         if (songName.length === 0) {
             songName = "the sign ace of base";
         }
@@ -92,10 +92,10 @@ inquirer.prompt([
             }
             // console.log(data.tracks);
         });
-    } else if (search.searchType === "movies") {
+    } else if (search.searchType === "movie-this") {
         // OMBD 
         // Create an empty variable for holding the movie name
-        movieName = search.movies;
+        movieName = search['movie-this'];
         // Then run a request to the OMDB API with the movie specified 
         var queryUrl = 'http://www.omdbapi.com/?t=' + movieName + '&y=&plot=short&tomatoes=true&r=json';
         // This line is just to help us debug against the actual URL.  
@@ -119,7 +119,7 @@ inquirer.prompt([
                 console.log("Rotten Tomatoes URL: " + JSON.parse(body).tomatoURL);
             }
         });
-    } else if (search.searchType === "something") {
+    } else if (search.searchType === "do-what-it-says") {
         fs.readFile("random.txt", "utf8", function(error, data) {
 
             // data = data.split(',');
@@ -130,8 +130,8 @@ inquirer.prompt([
             // console.log(data.replace(/a/g, ''));
 
             search.searchType = data[0];
-            search.songs = data[1];
-            search.movies = data[1];
+            search["spotify-this-song"] = data[1];
+            search["movie-this"] = data[1];
             logic(search);
 
         });
