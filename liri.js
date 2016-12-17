@@ -4,30 +4,28 @@ var spotify = require('spotify');
 // Include the request npm package(Don 't forget to run "npm install request" in this folder first!)
 var request = require('request');
 var fs = require('fs');
-
+var movieName ="";
 // Create a "Prompt" with a series of questions.
 inquirer.prompt([
     // Here we create a basic text prompt.
     {
         type: "list",
         message: "Tweets, Songs, Movies or Something?",
-        choices: ["tweets", "songs", "movies", "something"],
+        choices: ["my-tweets", "spotify-this-song", "movies", "something"],
         name: "searchType"
-    },
-    // Here we create a basic password-protected text prompt.
-    {
+    }, {
         type: "confirm",
         message: "my-tweets",
-        name: "tweets",
+        name: "my-tweets",
         when: function(answers) {
-            return answers.searchType === "tweets";
+            return answers.searchType === "my-tweets";
         }
     }, {
         type: "input",
         message: "spotify-this-song",
-        name: "songs",
+        name: "spotify-this-song",
         when: function(answers) {
-            return answers.searchType === "songs";
+            return answers.searchType === "spotify-this-song";
         }
     }, {
         type: "input",
@@ -38,7 +36,7 @@ inquirer.prompt([
         }
     }, {
         type: "confirm",
-        message: "do-what-it-say",
+        message: "do-what-it-says",
         name: "something",
         when: function(answers) {
             return answers.searchType === "something";
@@ -49,7 +47,7 @@ inquirer.prompt([
 ]).then(function logic(search) {
     // If we log that search as a JSON, we can see how it looks.
     // console.log(JSON.stringify(search, null, 2));
-    if (search.searchType === "tweets") {
+    if (search.searchType === "my-tweets") {
         // TWITTER
         console.log('this is loaded');
         keys = require('./keys.js');
@@ -64,28 +62,28 @@ inquirer.prompt([
             screen_name: 'maxvanbel',
             count: 20
         };
-        client.get('statuses/user_timeline', params, function(error, tweets, response) {
+        client.get('statuses/user_timeline', params, function(error, tweets, songName) {
             if (!error) {
                 for (var i = 0; i < tweets.length; i++) {
-                    console.log("\nTweet #" + (i+1) + ": " + tweets[i].text);
+                    console.log("\nTweet #" + (i + 1) + ": " + tweets[i].text);
                 }
             }
         });
-    } else if (search.searchType === "songs") {
+    } else if (search.searchType === "spotify-this-song") {
         // SPOTIFY 
         // var type = process.argv[3];
-        // var response = process.argv[2];
-        var response = search.songs;
-        if (response.length === 0) {
-        	response = "the sign ace of base";
+        // var songName = process.argv[2];
+        var songName = search.spotify-this-song;
+        if (songName.length === 0) {
+            songName = "the sign ace of base";
         }
         spotify.search({
             type: 'track',
-            query: response
+            query: songName
         }, function(err, data) {
             if (err) {
                 console.log('Error occurred: ' + err);
-                return;   
+                return;
             } else {
                 console.log("Song: " + data.tracks.items[0].name);
                 console.log("Artist: " + data.tracks.items[0].artists[0].name);
@@ -97,7 +95,7 @@ inquirer.prompt([
     } else if (search.searchType === "movies") {
         // OMBD 
         // Create an empty variable for holding the movie name
-        var movieName = search.movies;
+        movieName = search.movies;
         // Then run a request to the OMDB API with the movie specified 
         var queryUrl = 'http://www.omdbapi.com/?t=' + movieName + '&y=&plot=short&tomatoes=true&r=json';
         // This line is just to help us debug against the actual URL.  
@@ -122,26 +120,20 @@ inquirer.prompt([
             }
         });
     } else if (search.searchType === "something") {
-    	fs.readFile("random.txt", "utf8", function(error, data){
+        fs.readFile("random.txt", "utf8", function(error, data) {
 
-    		data = data.split(',');
+            // data = data.split(',');
+            data = data.split(',');
+            console.log(data);
+            console.log("First element: " + data[0]);
+            console.log("Second element: " + data[1]);
+            // console.log(data.replace(/a/g, ''));
 
-      	console.log(data);
-      	console.log("First element: " + data[0]);
-      	console.log("Second element: " + data[1]);
-        search.searchType = data[0];
-        	if (search.searchType === "songs") {
-        		response = data[1];
-        		logic("songs");
-        	} else if (search.searchType === "movies") {
-        		movieName = data[1];
-        		logic("movies");
-        	} else if (search.searchtype === "tweets") {
-        		logic("twitter");
-        	}
-      });
+            search.searchType = data[0];
+            search.songs = data[1];
+            search.movies = data[1];
+            logic(search);
+
+        });
     }
 });
-
-
-
